@@ -1,7 +1,7 @@
 import numpy as np
 
 from .trading_env import TradingEnv, Actions, Positions
-
+import talib
 
 class ForexEnv(TradingEnv):
 
@@ -21,10 +21,16 @@ class ForexEnv(TradingEnv):
 
         prices[self.frame_bound[0] - self.window_size]  # validate index (TODO: Improve validation)
         prices = prices[self.frame_bound[0]-self.window_size:self.frame_bound[1]]
-
-        diff = np.insert(np.diff(prices), 0, 0)
-        signal_features = np.column_stack((prices, diff))
-
+        # diff between close and sma 10
+        prices_sma_10_diff = prices - talib.SMA(prices, timeperiod=10)
+        # diff between close and sma 50
+        prices_sma_50_diff = prices - talib.SMA(prices, timeperiod=50)
+        # diff between sma 10 and sma 50
+        sma_10_50_diff = prices_sma_10_diff - prices_sma_50_diff
+        # Aggregate all features into single array
+        signal_features = np.hstack((prices, prices_sma_10_diff, prices_sma_50_diff, sma_10_50_diff))
+        # diff = np.insert(np.diff(prices), 0, 0)
+        # signal_features = np.column_stack((prices, diff))
         return prices, signal_features
 
 
